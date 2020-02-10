@@ -1,0 +1,24 @@
+inherit_from:
+  - rubocop_rules.yml
+  - .rubocop_todo.yml
+
+require:
+  - 'rubocop-performance'
+  - 'rubocop-rspec'
+
+AllCops:
+  TargetRubyVersion: 2.7
+  Exclude:
+    - '.pryrc'
+    - 'bin/rails'
+    - 'client/**/*'
+    - 'config/**/*'
+    - 'db/**/*'
+    - 'gemfiles/**/*'
+    - 'public/assets/**/*'
+    - 'script/**/*'
+    - 'tmp/**/*'
+    - 'vendor/**/*'
+    - 'lib/tzinfo/**/*'
+    - 'lib/google/**/*'
+    - 'deployment/capistrano/**/*'

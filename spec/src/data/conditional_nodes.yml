@@ -1,0 +1,33 @@
+intro:
+  name: 'Introduction'
+  values:
+    step: { op: '=', value: 1 }
+  links:
+    flag_node:
+      flags:
+        can_reach_flag_node: true
+    value_node:
+      values:
+        must_exceed_three: { op: '>', value: 3}
+    ending: {}
+
+flag_node:
+  name: 'Requires flag to be set'
+  flags:
+    reached_flag_node: true
+  links:
+    ending: {}
+
+value_node:
+  name: 'Requires value to exceed 3'
+  flags:
+    reached_value_node: true
+  links:
+    ending: {}
+
+ending:
+  name: 'Ending'
+  flags:
+    reached_ending: true
+  values:
+    step: { op: '+', value: 1 }

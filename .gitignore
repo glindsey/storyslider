@@ -1,0 +1,39 @@
+# tmp/cache files #
+##################
+tmp/*
+
+# dump files #
+################
+*.dump
+
+# logs #
+########
+log/*
+*.log
+*.log.*
+
+# Mac finder artifacts
+.DS_Store
+
+*.orig
+
+.byebug_history
+
+*.sublime-workspace
+
+# VIM swp files
+*.swp
+
+# rspec example run status
+.example_status
+
+# Auto-documentation related files
+\.yardoc/
+doc/railroady/
+doc/yard/
+
+\.pryrc
+
+*.backup
+
+*.diff

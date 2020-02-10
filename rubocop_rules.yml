@@ -1,0 +1,292 @@
+#       dP                                              dP
+#       88                                              88
+#       88        .d8888b. dP    dP .d8888b. dP    dP d8888P
+#       88        88'  `88 88    88 88'  `88 88    88   88
+#       88        88.  .88 88.  .88 88.  .88 88.  .88   88
+#       88888888P `88888P8 `8888P88 `88888P' `88888P'   dP
+#                               .88
+#                           d8888P
+
+# https://rubocop.readthedocs.io/en/latest/cops_layout/#layouthashalignment
+# We allow for multiple styles, just as long as they're aligned *somehow*.
+Layout/HashAlignment:
+  AllowMultipleStyles: true
+  EnforcedHashRocketStyle: [key, separator, table]
+  EnforcedColonStyle: [key, separator, table]
+
+# https://rubocop.readthedocs.io/en/latest/cops_layout/#layoutextraspacing
+Layout/ExtraSpacing:
+  AllowForAlignment: true
+  AllowBeforeTrailingComments: true
+
+#       dP        oo            dP
+#       88                      88
+#       88        dP 88d888b. d8888P
+#       88        88 88'  `88   88
+#       88        88 88    88   88
+#       88888888P dP dP    dP   dP
+
+# https://rubocop.readthedocs.io/en/latest/cops_lint/#lintsuppressedexception
+# It's generally okay to ignore exceptions in tests, since sometimes we want
+# to be able to test other side-effects.
+Lint/SuppressedException:
+  Exclude:
+    - 'spec/**/*'
+
+# https://rubocop.readthedocs.io/en/latest/cops_lint/#lintunusedblockargument
+Lint/UnusedBlockArgument:
+  AllowUnusedKeywordArguments: true
+
+# https://rubocop.readthedocs.io/en/latest/cops_lint/#lintunusedmethodargument
+Lint/UnusedMethodArgument:
+  AllowUnusedKeywordArguments: true
+
+# https://rubocop.readthedocs.io/en/latest/cops_lint/#lintvoid
+Lint/Void:
+  CheckForMethodsWithNoSideEffects: true
+
+#       8888ba.88ba             dP            oo
+#       88  `8b  `8b            88
+#       88   88   88 .d8888b. d8888P 88d888b. dP .d8888b. .d8888b.
+#       88   88   88 88ooood8   88   88'  `88 88 88'  `"" Y8ooooo.
+#       88   88   88 88.  ...   88   88       88 88.  ...       88
+#       dP   dP   dP `88888P'   dP   dP       dP `88888P' `88888P'
+
+
+# https://rubocop.readthedocs.io/en/latest/cops_metrics/#metricsabcsize
+Metrics/AbcSize:
+  Max: 20
+
+# https://rubocop.readthedocs.io/en/latest/cops_metrics/#metricsblocklength
+# TODO: Rails guild to address this later
+Metrics/BlockLength:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_metrics/#metricsblocknesting
+Metrics/BlockNesting:
+  Max: 5
+  CountBlocks: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_metrics/#metricsclasslength
+# TODO: Rails guild to address this later
+Metrics/ClassLength:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_metrics/#metricscyclomaticcomplexity
+Metrics/CyclomaticComplexity:
+  Max: 6
+
+# https://rubocop.readthedocs.io/en/latest/cops_metrics/#metricslinelength
+Metrics/LineLength:
+  AutoCorrect: true
+  Max: 120
+  AllowHeredoc: true
+  AllowURI: true
+  IgnoreCopDirectives: true
+  URISchemes:
+    - 'http'
+    - 'https'
+
+# https://rubocop.readthedocs.io/en/latest/cops_metrics/#metricsmethodlength
+# TODO: Rails guild to address this later
+Metrics/MethodLength:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_metrics/#metricsmodulelength
+# TODO: Rails guild to address this later
+Metrics/ModuleLength:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_metrics/#metricsparameterlists
+Metrics/ParameterLists:
+  Max: 5
+  CountKeywordArgs: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_metrics/#metricsperceivedcomplexity
+Metrics/PerceivedComplexity:
+  Max: 7
+
+#       888888ba                      oo
+#       88    `8b
+#       88     88 .d8888b. 88d8b.d8b. dP 88d888b. .d8888b.
+#       88     88 88'  `88 88'`88'`88 88 88'  `88 88'  `88
+#       88     88 88.  .88 88  88  88 88 88    88 88.  .88
+#       dP     dP `88888P8 dP  dP  dP dP dP    dP `8888P88
+#                                                      .88
+#                                                  d8888P
+
+
+# (no special rules)
+
+
+#        888888ba                    .8888b
+#        88    `8b                   88   "
+#       a88aaaa8P' .d8888b. 88d888b. 88aaa  .d8888b. 88d888b. 88d8b.d8b. .d8888b. 88d888b. .d8888b. .d8888b.
+#        88        88ooood8 88'  `88 88     88'  `88 88'  `88 88'`88'`88 88'  `88 88'  `88 88'  `"" 88ooood8
+#        88        88.  ... 88       88     88.  .88 88       88  88  88 88.  .88 88    88 88.  ... 88.  ...
+#        dP        `88888P' dP       dP     `88888P' dP       dP  dP  dP `88888P8 dP    dP `88888P' `88888P'
+
+# https://rubocop-performance.readthedocs.io/en/stable/cops_performance/#performancechainarrayallocation
+
+# https://rubocop-performance.readthedocs.io/en/stable/cops_performance/#performancecount
+#   Causes false positives with AR models.
+Performance/Count:
+  Enabled: false
+
+# https://rubocop-performance.readthedocs.io/en/stable/cops_performance/#performancedetect
+#   Causes false positives with AR models.
+#   However, it's probably a good idea to temporarily disable this cop at some
+#   point and run against the codebase to find and correct any *actual*
+#   positives it finds.
+Performance/Detect:
+  Enabled: false
+
+# https://rubocop-performance.readthedocs.io/en/stable/cops_performance/#performanceopenstruct
+#   While Struct is certainly faster than OpenStruct, it seems unlikely that
+#   we'll convert over any time soon.
+Performance/OpenStruct:
+  Enabled: false
+
+# https://rubocop-performance.readthedocs.io/en/stable/cops_performance/#performanceunfreezestring
+#   Just... no.
+Performance/UnfreezeString:
+  Enabled: false
+
+#        888888ba  .d88888b
+#        88    `8b 88.    "'
+#       a88aaaa8P' `Y88888b. 88d888b. .d8888b. .d8888b.
+#        88   `8b.       `8b 88'  `88 88ooood8 88'  `""
+#        88     88 d8'   .8P 88.  .88 88.  ... 88.  ...
+#        dP     dP  Y88888P  88Y888P' `88888P' `88888P'
+#                            88
+#                            dP
+
+# https://rubocop-rspec.readthedocs.io/en/stable/cops_rspec/#rspecanyinstance
+#   For the time being, at least, many of our test specs require the use of
+#   `allow_any_instance_of`.
+RSpec/AnyInstance:
+  Enabled: false
+
+# https://rubocop-rspec.readthedocs.io/en/stable/cops_rspec/#rspeccontextwording
+#   This is disabled in the TODO file for the time being, but when it is enabled
+#   (if ever) we'll want to add some allowed prefixes to the default list.
+RSpec/ContextWording:
+  Prefixes:
+    - when
+    - with
+    - within
+    - without
+    - if
+    - unless
+    - for
+
+# https://rubocop-rspec.readthedocs.io/en/stable/cops_rspec/#rspecexamplelength
+#   TODO: Rails guild to address this later
+RSpec/ExampleLength:
+  Enabled: false
+
+# https://rubocop-rspec.readthedocs.io/en/stable/cops_rspec/#rspecmessagespies
+#   `have_received` should really be used instead of `expect().to receive`,
+#   but let's not worry about it for now.
+RSpec/MessageSpies:
+  Enabled: false
+
+# https://rubocop-rspec.readthedocs.io/en/stable/cops_rspec/#rspecnamedsubject
+#   We have too many tests that would need fixing if this were enabled.
+RSpec/NamedSubject:
+  Enabled: false
+
+# https://rubocop-rspec.readthedocs.io/en/stable/cops_rspec/#rspecnestedgroups
+#   This one was unintentionally enabled, but could be useful with the right
+#   limit.
+#   TODO: Do we want to enable this with a reasonable nesting limit (ie, not 3)?
+RSpec/NestedGroups:
+  Enabled: false
+
+# https://rubocop-rspec.readthedocs.io/en/stable/cops_rspec/#rspecfilepath
+# rubocop doesn't read rails inflections
+#   For example, it wants GraphQL classes to live in graph_ql files.
+RSpec/FilePath:
+  CustomTransform:
+    GraphQL: graphql
+
+#       .d88888b                                      oo   dP
+#       88.    "'                                          88
+#       `Y88888b. .d8888b. .d8888b. dP    dP 88d888b. dP d8888P dP    dP
+#             `8b 88ooood8 88'  `"" 88    88 88'  `88 88   88   88    88
+#       d8'   .8P 88.  ... 88.  ... 88.  .88 88       88   88   88.  .88
+#        Y88888P  `88888P' `88888P' `88888P' dP       dP   dP   `8888P88
+#                                                                    .88
+#                                                                d8888P
+
+
+# (no special rules)
+
+
+#       .d88888b    dP            dP
+#       88.    "'   88            88
+#       `Y88888b. d8888P dP    dP 88 .d8888b.
+#             `8b   88   88    88 88 88ooood8
+#       d8'   .8P   88   88.  .88 88 88.  ...
+#        Y88888P    dP   `8888P88 dP `88888P'
+#                             .88
+#                         d8888P
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#stylebracesaroundhashparameters
+Style/BracesAroundHashParameters:
+  EnforcedStyle: context_dependent
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#styleconditionalassignment
+Style/ConditionalAssignment:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#styledocumentation
+# Ideally this would be enabled, but for now let's not.
+Style/Documentation:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#stylefrozenstringliteralcomment
+# This *should* be enabled for new work; however, due to the number of
+# existing violations in the code, it is disabled.
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#stylehashsyntax
+# Either hash-rocket or Ruby 1.9+ syntax is okay, just don't mix them
+Style/HashSyntax:
+  EnforcedStyle: no_mixed_keys
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#stylenumericliterals
+# No. Just do what you want.
+Style/NumericLiterals:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#stylenumericpredicate
+# Disabled because `#positive?` / `#negative?` / `#zero?` are not exactly
+# equivalent to `> 0` / `== 0` / `< 0`.
+Style/NumericPredicate:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#stylespecialglobalvars
+Style/SpecialGlobalVars:
+  EnforcedStyle: use_english_names
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#stylestringliterals
+# This *should* be enabled for new work; however, due to the number of
+# existing violations in the code, it is disabled.
+Style/StringLiterals:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#stylesymbolarray
+# Use whatever style you want here, we don't care.
+Style/SymbolArray:
+  Enabled: false
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#styleternaryparentheses
+Style/TernaryParentheses:
+  EnforcedStyle: require_parentheses_when_complex
+
+# https://rubocop.readthedocs.io/en/latest/cops_style/#stylewordarray
+# Use whatever style you want here, we don't care.
+Style/WordArray:
+  Enabled: false

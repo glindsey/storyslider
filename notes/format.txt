@@ -1,0 +1,22 @@
+# Story Format
+
+Story is saved in YAML format. The top level is a dictionary of story nodes, with the key being an identifier for the node. At some point there should be a node named "start" which denotes the entry point for the story; that node is usually at the top but doesn't necessarily have to be.
+
+The value is a nested dictionary, containing the following key-value pairs:
+
+- `name`: Name of the node, usually the "response" to the last ending question
+- `text`: The text that makes up this part of the story. It is optional, as the main benefit to this tool is for branch coverage analysis, for which the actual text is not necessary.
+- `flags`: Nested dictionary, where each key is a flag variable to set/clear, and each value is either true/false.
+- `values`: Nested dictionary, where each key is a numeric variable to alter, and each value is yet another nested dictionary:
+    + `op`: Operation to perform on the variable, can be `=`, `+`, or `-`.
+    + `value`: Value to set/add/subtract.
+- `prompt`: Prompt that goes at the end of the node, before the list of possible branch links.
+- `links`: Nested dictionary, where each key is the identifier of a node to link to, and each value is another nested dictionary:
+    + `flags`: Nested dictionary, where each key is a flag variable to test, and each value is either true/false.
+    + `values`: Nested dictionary, where each key is a numeric variable to test, and each value is yet another nested dictionary:
+        * `op`: Comparison op to perform, can be `==`, `<`, or `>`. (For the same of typos, one can use `=` instead of `==`.)
+        * `value`: Value to compare against.
+
+## During Traversal
+
+When nodes are traversed, they temporarily have `visited` breadcrumbs added to them. This avoids cyclic traversal.
