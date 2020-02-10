@@ -19,22 +19,26 @@ class Story
 
     raise TypeError, 'expected crumbs to be Array' unless crumbs_orig.is_a?(Array)
 
+    vars = vars_orig.dup
+    crumbs = crumbs_orig.dup
+
+    crumbs.push(id)
+
+    result_data = [{
+      'crumbs' => crumbs,
+      'vars' => vars
+    }]
+
     # First check if the node was already visited.
     if crumbs_orig.include?(id)
-      warn "Node #{id} was already visited in this branch; " \
-           "bailing out of possible cycle"
-      return []
+      warn_cycle(id)
+      return result_data
     end
 
     # Duplicate the node/vars at this level.
     node = data[id]
 
     raise TypeError, 'expected node to be Hash' unless node.is_a?(Hash)
-
-    vars = vars_orig.dup
-    crumbs = crumbs_orig.dup
-
-    crumbs.push(id)
 
     if node['flags'].is_a?(Hash)
       node['flags'].each do |(flagname, value)|
@@ -59,9 +63,7 @@ class Story
           vars[varname] = num
         when '-'
           vars[varname] -= num
-          if vars[varname] < 0
-            warn "Node ID '#{node}' -- decrementing '#{varname}' drops it below zero"
-          end
+          warn_decrement(node, varname) if vars[varname] < 0
         when '+'
           vars[varname] += num
         else
@@ -69,11 +71,6 @@ class Story
         end
       end
     end
-
-    result_data = {
-      'crumbs' => crumbs,
-      'vars' => vars
-    }
 
     link_results = []
     if node['links'].is_a?(Hash)
@@ -122,6 +119,15 @@ class Story
     end
 
     # End of links; return accumulated link results
-    link_results.empty? ? [result_data] : link_results
+    link_results.empty? ? result_data : link_results
+  end
+
+  def warn_cycle(id)
+    warn "Node #{id} was already visited in this branch; " \
+         "bailing out of possible cycle"
+  end
+
+  def warn_decrement(id, varname)
+    warn "Node ID '#{id}' -- decrementing '#{varname}' drops it below zero"
   end
 end

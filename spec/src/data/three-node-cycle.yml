@@ -1,0 +1,18 @@
+intro:
+  name: 'Introduction'
+  links:
+    ouroboros-1: {}
+
+ouroboros-1:
+  name: 'Ouroboros 1'
+  links:
+    ouroboros-2: {}
+    ending: {}
+
+ouroboros-2:
+  name: 'Ouroboros 2'
+  links:
+    intro: {}
+
+ending:
+  name: 'Ending'

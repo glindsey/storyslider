@@ -63,6 +63,42 @@ describe Story do
       end
     end
 
+    context 'when a decrement drops a variable below zero' do
+      subject { described_class.new('spec/src/data/decrement_warning.yml') }
+
+      it 'warns the user if a decrement drops a var below zero' do
+        allow(subject).to receive(:warn_decrement)
+
+        results
+
+        expect(subject).to have_received(:warn_decrement)
+      end
+    end
+
+    context 'when a self-reference is detected' do
+      subject { described_class.new('spec/src/data/selfref.yml') }
+
+      it 'warns the user of a cycle' do
+        allow(subject).to receive(:warn_cycle)
+
+        results
+
+        expect(subject).to have_received(:warn_cycle)
+      end
+    end
+
+    context 'when a self-reference is detected' do
+      subject { described_class.new('spec/src/data/three-node-cycle.yml') }
+
+      it 'warns the user of a cycle' do
+        allow(subject).to receive(:warn_cycle)
+
+        results
+
+        expect(subject).to have_received(:warn_cycle)
+      end
+    end
+
     context 'with a conditional YML file' do
       subject { described_class.new('spec/src/data/conditional_nodes.yml') }
 

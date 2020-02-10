@@ -1,0 +1,13 @@
+intro:
+  name: 'Introduction'
+  values:
+    number: { op: '=', value: 0 }
+  links:
+    ending: {}
+
+ending:
+  name: 'Ending'
+  flags:
+    reached_ending: true
+  values:
+    number: { op: '-', value: 1 }
