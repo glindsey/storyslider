@@ -9,7 +9,6 @@ intro:
     value_node:
       values:
         must_exceed_three: { op: '>', value: 3}
-    ending: {}
 
 flag_node:
   name: 'Requires flag to be set'
@@ -28,6 +27,7 @@ value_node:
 ending:
   name: 'Ending'
   flags:
+    ending: true
     reached_ending: true
   values:
     step: { op: '+', value: 1 }

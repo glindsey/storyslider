@@ -6,3 +6,5 @@ intro:
 
 ending:
   name: 'Ending'
+  flags:
+    ending: true

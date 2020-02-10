@@ -16,3 +16,5 @@ ouroboros-2:
 
 ending:
   name: 'Ending'
+  flags:
+    ending: true
