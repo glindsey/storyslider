@@ -8,7 +8,9 @@ require 'ap'
 
 story = Story.new('./story.yml')
 
-results = story.traverse('intro')
+results = story.analyze
+
+ap story.analysis
 
 warn "Total number of valid paths: #{results.length}"
 
