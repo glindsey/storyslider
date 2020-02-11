@@ -13,6 +13,7 @@ describe Story do
       allow(subject).to receive(:warn_decrement)
       allow(subject).to receive(:warn_ending)
       allow(subject).to receive(:warn_first_again)
+      allow(subject).to receive(:warn_missing_node)
     end
 
     context 'with a single-node YML file' do
@@ -68,6 +69,18 @@ describe Story do
 
       it 'returns the value "step" = 2' do
         expect(results[0]['vars']['step']).to eq(2)
+      end
+    end
+
+    context 'when a linked node is missing' do
+      subject { described_class.new('spec/src/data/missing_node.yml') }
+
+      it 'warns the user of the missing node' do
+        allow(subject).to receive(:warn_missing_node)
+
+        results
+
+        expect(subject).to have_received(:warn_missing_node)
       end
     end
 
@@ -177,5 +190,65 @@ describe Story do
         end
       end
     end
+
+    context 'with YML file containing conditional shortcuts' do
+      subject { described_class.new('spec/src/data/conditional_shortcuts.yml') }
+
+      it 'does not raise an error' do
+        expect { subject.traverse('intro') }.not_to raise_error
+      end
+
+      it 'returns an array' do
+        expect(results).to be_an(Array)
+      end
+
+      context 'with default vars' do
+        it 'returns a single traversal path' do
+          expect(results.length).to eq(1)
+        end
+
+        it 'returns the crumb path "intro"' do
+          expect(results[0]['crumbs']).to eq(['intro'])
+        end
+
+        it 'warns the user of a dead-end' do
+          allow(subject).to receive(:warn_deadend)
+
+          results
+
+          expect(subject).to have_received(:warn_deadend)
+        end
+      end
+
+      context 'with flag set' do
+        let(:starting_vars) { { 'can_reach_flag_node' => true } }
+
+        it 'returns one traversal path' do
+          expect(results.length).to eq(1)
+        end
+      end
+
+      context 'with value set' do
+        let(:starting_vars) { { 'must_exceed_three' => 5 } }
+
+        it 'returns one traversal path' do
+          expect(results.length).to eq(1)
+        end
+      end
+
+      context 'with both set' do
+        let(:starting_vars) do
+          {
+            'can_reach_flag_node' => true,
+            'must_exceed_three' => 5
+          }
+        end
+
+        it 'returns two traversal paths' do
+          expect(results.length).to eq(2)
+        end
+      end
+    end
+
   end
 end

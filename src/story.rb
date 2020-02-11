@@ -1,6 +1,7 @@
 # frozen_string_literals: true
 
 require 'pry'
+require 'set'
 require 'yaml'
 
 class Story
@@ -57,11 +58,32 @@ class Story
 
     if node['values'].is_a?(Hash)
       node['values'].each do |(varname, rules)|
-        raise TypeError, 'expected Hash' unless rules.is_a?(Hash)
+        op = ''
+        num = 0
 
-        op = rules['op'].to_s
-        num = rules['value'].to_i
-        raise TypeError, 'value must be numeric' unless num.is_a?(Integer)
+        case rules
+        when String
+          rules.strip!
+          tokens = rules.split(/\b/).map(&:strip)
+          case tokens[0]
+          when '=', '-', '+'
+            op = tokens[0]
+            num = tokens[1].to_i
+          when Integer
+            op = '='
+            num = tokens[0].to_i
+          else
+            raise TypeError, "don't know how to parse '#{rules}'"
+          end
+        when Integer
+          op = '='
+          num = rules
+        when Hash
+          op = rules['op'].to_s
+          num = rules['value'].to_i
+        else
+          raise TypeError, "expected #{rules} to be String, Integer, or Hash"
+        end
 
         case op
         when '='
@@ -96,10 +118,33 @@ class Story
 
           if value_conditions.is_a?(Hash)
             value_conditions.each do |varname, rules|
-              raise TypeError, 'expected Hash' unless rules.is_a?(Hash)
+              op = ''
+              num = 0
 
-              op = rules['op'].to_s
-              num = rules['value'].to_i
+              case rules
+              when String
+                rules.strip!
+                tokens = rules.split(/\b/).map(&:strip)
+                case tokens[0]
+                when '=', '==', '<', '>'
+                  op = tokens[0]
+                  num = tokens[1].to_i
+                when Integer
+                  op = '='
+                  num = tokens[0].to_i
+                else
+                  raise TypeError, "don't know how to parse '#{rules}'"
+                end
+              when Integer
+                op = '=='
+                num = rules.to_i
+              when Hash
+                op = rules['op'].to_s
+                num = rules['value'].to_i
+              else
+                raise TypeError,
+                      "expected #{rules} to be String, Integer, or Hash"
+              end
 
               case op
               when '=', '=='
@@ -115,10 +160,13 @@ class Story
           end
         end
 
+        if !data.key?(link)
+          warn_missing_node(id, link)
+          can_visit = false
+        end
+
         if can_visit
-          link_results.concat(
-            traverse(link, vars, crumbs)
-          )
+          link_results.concat(traverse(link, vars, crumbs))
         else
           result_data['links'].delete(link)
           result_data['locked_links'].add(link)
@@ -130,7 +178,7 @@ class Story
       if !result_data['locked_links'].empty?
         warn_deadend(id, crumbs, vars)
       elsif vars['ending'] != true
-        warn_ending(id, crumbs, vars)
+        warn_ending(id)
       end
     end
 
@@ -159,33 +207,36 @@ class Story
   end
 
   def warn_cycle(id)
-    warn "Node #{id} was already visited in this branch; " \
+    warn "#{id}: Node was already visited in this branch; " \
          "bailing out of possible cycle"
   end
 
   def warn_deadend(id, crumbs, vars)
-    warn "Dead end encountered at node ID '#{id}' -- all links locked"
-    print_context(crumbs, vars)
+    warn "#{id}: Dead end encountered -- all links locked"
+    print_context(id, crumbs, vars)
   end
 
   def warn_decrement(id, varname, crumbs, vars)
-    warn "Node ID '#{id}' -- decrementing '#{varname}' drops it below zero"
-    print_context(crumbs, vars)
+    warn "#{id}: Decrementing '#{varname}' drops it below zero"
+    print_context(id, crumbs, vars)
   end
 
-  def warn_ending(id, crumbs, vars)
-    warn "Dead end encountered at node ID '#{id}' -- " \
-         "no links present and ending flag not set"
-    print_context(crumbs, vars)
+  def warn_ending(id)
+    warn "#{id}: Dead end encountered -- " \
+         "no links present and 'ending' flag not set"
   end
 
   def warn_first_again(id, flagname, crumbs, vars)
-    warn "Flag #{flagname} was reset at node ID '#{id}'"
-    print_context(crumbs, vars)
+    warn "#{id}: Previously set flag #{flagname} was reset"
+    print_context(id, crumbs, vars)
   end
 
-  def print_context(crumbs, vars)
-    warn "Breadcrumb trail: #{crumbs}"
-    warn "Variables: #{vars}"
+  def warn_missing_node(id, linkname)
+    warn "#{id}: Links to missing node #{linkname}"
+  end
+
+  def print_context(id, crumbs, vars)
+    warn "#{' ' * id.length}  Breadcrumb trail: #{crumbs}"
+    warn "#{' ' * id.length}  Variables: #{vars}"
   end
 end

@@ -37,3 +37,6 @@ doc/yard/
 *.backup
 
 *.diff
+
+# do not commit the testing story
+story.yml

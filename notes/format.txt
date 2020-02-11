@@ -6,6 +6,9 @@ The value is a nested dictionary, containing the following key-value pairs:
 
 - `name`: Name of the node, usually the "response" to the last ending question
 - `text`: The text that makes up this part of the story. It is optional, as the main benefit to this tool is for branch coverage analysis, for which the actual text is not necessary.
+- `url`: The URL pointing to the page for this story. Also optional.
+- `published`: Flag indicating whether this node has been published.
+- `tentative`: Flag indicating plans that haven't yet been drafted or published.
 - `flags`: Nested dictionary, where each key is a flag variable to set/clear, and each value is either true/false.
 - `values`: Nested dictionary, where each key is a numeric variable to alter, and each value is yet another nested dictionary:
     + `op`: Operation to perform on the variable, can be `=`, `+`, or `-`.
