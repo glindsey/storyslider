@@ -10,4 +10,6 @@ story = Story.new('./story.yml')
 
 results = story.traverse('intro')
 
-ap results
+warn "Total number of valid paths: #{results.length}"
+
+# ap results

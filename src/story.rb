@@ -89,9 +89,11 @@ class Story
         when '='
           vars[varname] = num
         when '-'
+          vars[varname] ||= 0
           vars[varname] -= num
           warn_decrement(node, varname, crumbs, vars) if vars[varname] < 0
         when '+'
+          vars[varname] ||= 0
           vars[varname] += num
         else
           raise TypeError, "invalid operator '#{op}' provided"
@@ -162,10 +164,7 @@ class Story
 
         if !data.key?(link)
           warn_missing_node(id, link)
-          can_visit = false
-        end
-
-        if can_visit
+        elsif can_visit
           link_results.concat(traverse(link, vars, crumbs))
         else
           result_data['links'].delete(link)
@@ -227,12 +226,12 @@ class Story
   end
 
   def warn_first_again(id, flagname, crumbs, vars)
-    warn "#{id}: Previously set flag #{flagname} was reset"
+    warn "#{id}: Previously set flag '#{flagname}' was reset"
     print_context(id, crumbs, vars)
   end
 
   def warn_missing_node(id, linkname)
-    warn "#{id}: Links to missing node #{linkname}"
+    warn "#{id}: Links to missing node '#{linkname}'"
   end
 
   def print_context(id, crumbs, vars)
