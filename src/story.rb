@@ -47,6 +47,10 @@ class Story
           raise TypeError, 'flag must be true or false'
         end
 
+        if vars[flagname] == true && flagname.start_with?('first_')
+          warn_first_again(id, flagname, crumbs, vars)
+        end
+
         vars[flagname] = value
       end
     end
@@ -64,7 +68,7 @@ class Story
           vars[varname] = num
         when '-'
           vars[varname] -= num
-          warn_decrement(node, varname) if vars[varname] < 0
+          warn_decrement(node, varname, crumbs, vars) if vars[varname] < 0
         when '+'
           vars[varname] += num
         else
@@ -161,17 +165,26 @@ class Story
 
   def warn_deadend(id, crumbs, vars)
     warn "Dead end encountered at node ID '#{id}' -- all links locked"
-    warn "Breadcrumb trail: #{crumbs}"
-    warn "Variables: #{vars}"
+    print_context(crumbs, vars)
   end
 
-  def warn_decrement(id, varname)
+  def warn_decrement(id, varname, crumbs, vars)
     warn "Node ID '#{id}' -- decrementing '#{varname}' drops it below zero"
+    print_context(crumbs, vars)
   end
 
   def warn_ending(id, crumbs, vars)
     warn "Dead end encountered at node ID '#{id}' -- " \
          "no links present and ending flag not set"
+    print_context(crumbs, vars)
+  end
+
+  def warn_first_again(id, flagname, crumbs, vars)
+    warn "Flag #{flagname} was reset at node ID '#{id}'"
+    print_context(crumbs, vars)
+  end
+
+  def print_context(crumbs, vars)
     warn "Breadcrumb trail: #{crumbs}"
     warn "Variables: #{vars}"
   end

@@ -12,6 +12,7 @@ describe Story do
       allow(subject).to receive(:warn_deadend)
       allow(subject).to receive(:warn_decrement)
       allow(subject).to receive(:warn_ending)
+      allow(subject).to receive(:warn_first_again)
     end
 
     context 'with a single-node YML file' do
@@ -94,7 +95,7 @@ describe Story do
       end
     end
 
-    context 'when a self-reference is detected' do
+    context 'when a cycle is detected' do
       subject { described_class.new('spec/src/data/three-node-cycle.yml') }
 
       it 'warns the user of a cycle' do
@@ -103,6 +104,18 @@ describe Story do
         results
 
         expect(subject).to have_received(:warn_cycle)
+      end
+    end
+
+    context 'when a "first_*" flag is set more than once' do
+      subject { described_class.new('spec/src/data/two_nodes.yml') }
+
+      it 'warns the user of the reset flag' do
+        allow(subject).to receive(:warn_first_again)
+
+        results
+
+        expect(subject).to have_received(:warn_first_again)
       end
     end
 

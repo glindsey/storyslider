@@ -1,5 +1,7 @@
 intro:
   name: 'Introduction'
+  flags:
+    first_set: true
   values:
     step: { op: '=', value: 1 }
   links:
@@ -8,6 +10,7 @@ intro:
 ending:
   name: 'Ending'
   flags:
+    first_set: true
     ending: true
     reached_ending: true
   values:
