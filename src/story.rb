@@ -5,6 +5,7 @@ require 'set'
 require 'yaml'
 
 require_relative 'boolean_superposition'
+require_relative 'breadcrumb'
 require_relative 'minmax'
 
 class Story
@@ -60,7 +61,7 @@ class Story
     vars = vars_orig.dup
     crumbs = crumbs_orig.dup
 
-    crumbs.push(id)
+    crumbs.push(Breadcrumb.new(id, vars))
 
     # Duplicate the node/vars at this level.
     node = data[id]
@@ -73,11 +74,12 @@ class Story
     }
 
     # First check if the node was already visited.
-    if crumbs_orig.include?(id)
-      warn_cycle(id, crumbs)
-      return [result_data]
+    crumbs_orig.reverse_each do |crumb|
+      if crumb.id == id && crumb.vars == vars
+        warn_cycle(id, crumbs.map(&:id), vars)
+        return [result_data]
+      end
     end
-
 
     if node['flags'].is_a?(Hash)
       node['flags'].each do |(flagname, value)|
@@ -86,7 +88,7 @@ class Story
         end
 
         if vars[flagname] == true && flagname.start_with?('first_')
-          warn_first_again(id, flagname, crumbs, vars)
+          warn_first_again(id, flagname, crumbs.map(&:id), vars)
         end
 
         vars[flagname] = value
@@ -129,7 +131,7 @@ class Story
           vars[varname] ||= 0
           vars[varname] -= num
           if vars[varname] < 0
-            warn_decrement(id, varname, crumbs, vars)
+            warn_decrement(id, varname, crumbs.map(&:id), vars)
             vars[varname] = 0
           end
         when '+'
@@ -234,7 +236,7 @@ class Story
 
     if result_data['links'].empty?
       if !result_data['locked_links'].empty?
-        warn_deadend(id, crumbs, vars)
+        warn_deadend(id, crumbs.map(&:id), vars)
       elsif vars['ending'] != true
         warn_ending(id)
       end
@@ -257,8 +259,8 @@ class Story
       # Iterate through the nodes in the trail.
       path['crumbs'].each do |crumb|
         # Create or add to visit count for each node in the trail.
-        counts[crumb] ||= 0
-        counts[crumb] += 1
+        counts[crumb.id] ||= 0
+        counts[crumb.id] += 1
       end
     end
 
@@ -270,19 +272,37 @@ class Story
     @analysis[:endings].add(id)
   end
 
-  def warn_cycle(id, crumbs)
+  def warn_cycle(id, trail, vars)
     @analysis[:cycles] ||= []
-    @analysis[:cycles].push({ id: id, crumbs: crumbs })
+    @analysis[:cycles].push(
+      {
+        id: id,
+        trail: print_trail(trail),
+        vars: vars
+      }
+    )
   end
 
-  def warn_deadend(id, crumbs, vars)
+  def warn_deadend(id, trail, vars)
     @analysis[:deadends] ||= []
-    @analysis[:deadends].push({ id: id, crumbs: crumbs, vars: vars })
+    @analysis[:deadends].push(
+      {
+        id: id,
+        trail: print_trail(trail),
+        vars: vars
+      }
+    )
   end
 
-  def warn_decrement(id, varname, crumbs, vars)
+  def warn_decrement(id, varname, trail, vars)
     @analysis[:underflows] ||= []
-    @analysis[:underflows].push({ id: id, crumbs: crumbs, vars: vars })
+    @analysis[:underflows].push(
+      {
+        id: id,
+        trail: print_trail(trail),
+        vars: vars
+      }
+    )
   end
 
   def warn_ending(id)
@@ -290,14 +310,24 @@ class Story
     @analysis[:unfinished_branches].add(id)
   end
 
-  def warn_first_again(id, flagname, crumbs, vars)
+  def warn_first_again(id, flagname, trail, vars)
     @analysis[:reset_facts] ||= []
-    @analysis[:reset_facts].push({ id: id, crumbs: crumbs, vars: vars })
+    @analysis[:reset_facts].push(
+      {
+        id: id,
+        trail: print_trail(trail),
+        vars: vars
+      }
+    )
   end
 
   def warn_missing_node(id, linkname)
     @analysis[:missing_links] ||= {}
     @analysis[:missing_links][:linkname] ||= Set.new
     @analysis[:missing_links][:linkname].add({id: linkname})
+  end
+
+  def print_trail(trail)
+    trail.join(' -> ')
   end
 end
