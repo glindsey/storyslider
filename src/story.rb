@@ -74,7 +74,7 @@ class Story
 
     # First check if the node was already visited.
     if crumbs_orig.include?(id)
-      warn_cycle(id)
+      warn_cycle(id, crumbs)
       return [result_data]
     end
 
@@ -270,19 +270,19 @@ class Story
     @analysis[:endings].add(id)
   end
 
-  def warn_cycle(id)
+  def warn_cycle(id, crumbs)
     @analysis[:cycles] ||= []
-    @analysis[:cycles] += { id: id }
+    @analysis[:cycles].push({ id: id, crumbs: crumbs })
   end
 
   def warn_deadend(id, crumbs, vars)
     @analysis[:deadends] ||= []
-    @analysis[:deadends] += { id: id, crumbs: crumbs, vars: vars }
+    @analysis[:deadends].push({ id: id, crumbs: crumbs, vars: vars })
   end
 
   def warn_decrement(id, varname, crumbs, vars)
     @analysis[:underflows] ||= []
-    @analysis[:underflows] += { id: id, crumbs: crumbs, vars: vars }
+    @analysis[:underflows].push({ id: id, crumbs: crumbs, vars: vars })
   end
 
   def warn_ending(id)
@@ -292,7 +292,7 @@ class Story
 
   def warn_first_again(id, flagname, crumbs, vars)
     @analysis[:reset_facts] ||= []
-    @analysis[:reset_facts] += { id: id, crumbs: crumbs, vars: vars }
+    @analysis[:reset_facts].push({ id: id, crumbs: crumbs, vars: vars })
   end
 
   def warn_missing_node(id, linkname)

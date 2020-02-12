@@ -1,0 +1,55 @@
+intro:
+  name: 'Introduction'
+  text: 'You are a guy with $10 in your pocket.'
+  published: true
+  links:
+    meadow: {}
+
+meadow:
+  name: 'You find yourself in a meadow.'
+  text: 'There is a puppy here. To your north is a building; its door is guarded by a bouncer, and a sign reads "Entrance Fee: $2.00". There are also exits to your east and west.'
+  published: true
+  flags:
+    started: true
+  values:
+    money: 10
+  prompt: 'Now what?'
+  links:
+    meadow-e: {}
+    meadow-w: {}
+    meadow-n-pay: { values: { money: '> 2'} }
+    party: { flags: { pet_puppy: true } }
+    puppy: { flags: { pet_puppy: false } }
+
+puppy:
+  name: 'You pet the puppy. The bouncer is so moved by your sensitivity that he offers to let you in for free.'
+  flags:
+    pet_puppy: true
+  links:
+    meadow: {}
+
+meadow-n-pay:
+  name: 'You pay the bouncer $2 to enter the building.'
+  values:
+    money: '-2'
+  links:
+    party: { redirect: true }
+
+party:
+  name: 'The bouncer lets you enter the building.'
+  text: 'You meet a girl there and live happily ever after, yay.'
+  flags:
+    met_girl: true
+    ending: true
+
+meadow-e:
+  name: 'You head east.'
+  text: 'You find yourself at the shore of a large lake.'
+  links:
+    intro: { name: 'You go east, back to the meadow.' }
+
+meadow-w:
+  name: 'You head west.'
+  text: 'You find yourself surrounded by forest. There is no way to go except back the way you came.'
+  links:
+    meadow: { name: 'You go west, back to the meadow.' }
