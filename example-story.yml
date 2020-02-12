@@ -30,6 +30,7 @@ puppy:
 
 meadow-n-pay:
   name: 'You pay the bouncer $2 to enter the building.'
+  color: 'green'
   values:
     money: '-2'
   links:
@@ -38,6 +39,7 @@ meadow-n-pay:
 party:
   name: 'The bouncer lets you enter the building.'
   text: 'You meet a girl there and live happily ever after, yay.'
+  published: true
   flags:
     met_girl: true
     ending: true
