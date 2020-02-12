@@ -26,7 +26,21 @@ class Story
 
     zero_visit_reasons = zero_visits.each_with_object({}) do |node, result|
       sources = @backlinks[node].to_a
-      result[node] = sources.map { |source| possible_vars[source] }
+      result[node] = sources.map do |source|
+        source_node = data[source]
+        links = source_node['links']
+        conditions = links[node]
+        flag_conditions = conditions['flags'] || {}
+        value_conditions = conditions['values'] || {}
+        flag_info = flag_conditions.each_with_object({}) do |(flag_name, flag_condition), info|
+          info[flag_name] = { condition: flag_condition, actual: possible_vars[source][flag_name] }
+        end
+        value_info = value_conditions.each_with_object({}) do |(value_name, value_condition), info|
+          info[value_name] = { condition: value_condition, actual: possible_vars[source][value_name] }
+        end
+
+        flag_info.merge(value_info)
+      end
     end
 
     @analysis[:never_hit] = zero_visit_reasons
