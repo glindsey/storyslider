@@ -5,6 +5,9 @@ GEM
     awesome_print (1.8.0)
     byebug (11.1.1)
     coderay (1.1.2)
+    concurrent-ruby (1.1.6)
+    concurrent-ruby-ext (1.1.6)
+      concurrent-ruby (= 1.1.6)
     contracts (0.16.0)
     diff-lcs (1.3)
     hirb (0.7.3)
@@ -59,6 +62,8 @@ PLATFORMS
 DEPENDENCIES
   awesome_print
   byebug
+  concurrent-ruby
+  concurrent-ruby-ext
   contracts
   hirb
   pry

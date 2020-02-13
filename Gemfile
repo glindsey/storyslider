@@ -2,6 +2,8 @@ source 'https://rubygems.org'
 
 gem 'awesome_print'
 gem 'byebug'
+gem 'concurrent-ruby', require: 'concurrent'
+gem 'concurrent-ruby-ext'
 gem 'contracts'
 gem 'hirb'
 gem 'pry'
