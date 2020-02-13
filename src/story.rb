@@ -1,5 +1,6 @@
 # frozen_string_literals: true
 
+require 'concurrent'
 require 'pry'
 require 'set'
 require 'yaml'
@@ -7,26 +8,28 @@ require 'yaml'
 require_relative 'boolean_superposition'
 require_relative 'breadcrumb'
 require_relative 'minmax'
+require_relative 'utilities'
 
 class Story
-  attr_reader :data, :analysis, :backlinks, :possible_flags, :possible_vars
+  attr_reader :data
+
+  include Utilities
 
   def initialize(filename)
-    @data = YAML.load_file(filename)
+    warn "Loading YAML data from #{filename}..."
+    @data = YAML.load_file(filename).freeze
   end
 
   def analyze
-    @analysis = {}
-    @backlinks = {}
-    @possible_flags = {}
-    @possible_vars = {}
-    results = traverse('intro')
+    warn "Running traversal..."
+    results, analysis = traverse('intro')
 
+    warn "Running coverage analysis..."
     coverage = analyze_coverage(results)
     zero_visits = coverage.select { |_, num| num == 0 }.keys
 
     zero_visit_reasons = zero_visits.each_with_object({}) do |node, result|
-      sources = @backlinks[node].to_a
+      sources = analysis[:backlinks][node].to_a
       result[node] = sources.map do |source|
         source_node = data[source]
         links = source_node['links']
@@ -44,12 +47,12 @@ class Story
       end
     end
 
-    @analysis[:never_hit] = zero_visit_reasons
+    analysis[:issues][:never_hit] = zero_visit_reasons
 
-    results
+    [results, analysis]
   end
 
-  def traverse(id, vars_orig = {}, crumbs_orig = [])
+  def traverse(id, vars_orig = {}, crumbs_orig = [], analysis = {})
     id = id.to_s if id.is_a?(Symbol)
 
     raise TypeError, "#{id}: expected id to be String" unless id.is_a?(String)
@@ -58,12 +61,12 @@ class Story
 
     raise TypeError, "#{id}: expected crumbs to be Array" unless crumbs_orig.is_a?(Array)
 
+    # Duplicate the node/vars at this level.
     vars = vars_orig.dup
     crumbs = crumbs_orig.dup
 
     crumbs.push(Breadcrumb.new(id, vars))
 
-    # Duplicate the node/vars at this level.
     node = data[id]
 
     raise TypeError, "#{id}: expected node to be Hash" unless node.is_a?(Hash)
@@ -76,7 +79,7 @@ class Story
     # First check if the node was already visited.
     crumbs_orig.reverse_each do |crumb|
       if crumb.id == id && crumb.vars == vars
-        warn_cycle(id, crumbs.map(&:id), vars)
+        warn_cycle!(id, crumbs.map(&:id), vars, analysis)
         return [result_data]
       end
     end
@@ -88,7 +91,7 @@ class Story
         end
 
         if vars[flagname] == true && flagname.start_with?('first_')
-          warn_first_again(id, flagname, crumbs.map(&:id), vars)
+          warn_first_again!(id, flagname, crumbs.map(&:id), vars, analysis)
         end
 
         vars[flagname] = value
@@ -131,7 +134,7 @@ class Story
           vars[varname] ||= 0
           vars[varname] -= num
           if vars[varname] < 0
-            warn_decrement(id, varname, crumbs.map(&:id), vars)
+            warn_decrement!(id, varname, crumbs.map(&:id), vars, analysis)
             vars[varname] = 0
           end
         when '+'
@@ -144,19 +147,20 @@ class Story
     end
 
     # Update possible values of all vars at this point in traversal.
+    analysis[:possible_vars] ||= {}
     vars.each do |(varname, varvalue)|
-      @possible_vars[id] ||= {}
+      analysis[:possible_vars][id] ||= {}
 
       # TODO: this will fail if a var is a flag in one node and a number in
       #       another, should handle that more error condition more gracefully
       case varvalue
       when FalseClass, TrueClass
-        @possible_vars[id][varname] ||= BooleanSuperposition.new(varvalue)
+        analysis[:possible_vars][id][varname] ||= BooleanSuperposition.new(varvalue)
       when Integer
-        @possible_vars[id][varname] ||= MinMax.new(varvalue, varvalue)
+        analysis[:possible_vars][id][varname] ||= MinMax.new(varvalue, varvalue)
       end
 
-      @possible_vars[id][varname] += varvalue
+      analysis[:possible_vars][id][varname] += varvalue
     end
 
     link_ids = Set.new((node['links'] || {}).keys)
@@ -166,8 +170,9 @@ class Story
     link_results = []
     if node['links'].is_a?(Hash)
       node['links'].each do |(link, conditions)|
-        @backlinks[link] ||= Set.new
-        @backlinks[link].add(id)
+        analysis[:backlinks] ||= {}
+        analysis[:backlinks][link] ||= Set.new
+        analysis[:backlinks][link].add(id)
 
         can_visit = true
         if conditions.is_a?(Hash)
@@ -224,9 +229,10 @@ class Story
         end
 
         if !data.key?(link)
-          warn_missing_node(id, link)
+          warn_missing_node!(id, link, analysis)
         elsif can_visit
-          link_results.concat(traverse(link, vars, crumbs))
+          results, analysis = traverse(link, vars, crumbs, analysis)
+          link_results.concat(results)
         else
           result_data['links'].delete(link)
           result_data['locked_links'].add(link)
@@ -236,14 +242,14 @@ class Story
 
     if result_data['links'].empty?
       if !result_data['locked_links'].empty?
-        warn_deadend(id, crumbs.map(&:id), vars)
+        warn_deadend!(id, crumbs.map(&:id), vars, analysis)
       elsif vars['ending'] != true
-        warn_ending(id)
+        warn_ending!(id, analysis)
       end
     end
 
-    # End of links; return accumulated link results
-    link_results.empty? ? [result_data] : link_results
+    # End of links; return accumulated link results and analysis data
+    [(link_results.empty? ? [result_data] : link_results), analysis]
   end
 
   def analyze_coverage(results)
@@ -267,14 +273,15 @@ class Story
     counts
   end
 
-  def note_proper_ending(id)
-    @analysis[:endings] ||= Set.new
-    @analysis[:endings].add(id)
+  def note_proper_ending(id, analysis)
+    analysis[:endings] ||= Set.new
+    analysis[:endings].add(id)
   end
 
-  def warn_cycle(id, trail, vars)
-    @analysis[:cycles] ||= []
-    @analysis[:cycles].push(
+  def warn_cycle!(id, trail, vars, analysis)
+    analysis[:issues] ||= {}
+    analysis[:issues][:cycles] ||= []
+    analysis[:issues][:cycles].push(
       {
         id: id,
         trail: print_trail(trail),
@@ -283,9 +290,10 @@ class Story
     )
   end
 
-  def warn_deadend(id, trail, vars)
-    @analysis[:deadends] ||= []
-    @analysis[:deadends].push(
+  def warn_deadend!(id, trail, vars, analysis)
+    analysis[:issues] ||= {}
+    analysis[:issues][:deadends] ||= []
+    analysis[:issues][:deadends].push(
       {
         id: id,
         trail: print_trail(trail),
@@ -294,9 +302,10 @@ class Story
     )
   end
 
-  def warn_decrement(id, varname, trail, vars)
-    @analysis[:underflows] ||= []
-    @analysis[:underflows].push(
+  def warn_decrement!(id, varname, trail, vars, analysis)
+    analysis[:issues] ||= {}
+    analysis[:issues][:underflows] ||= []
+    analysis[:issues][:underflows].push(
       {
         id: id,
         trail: print_trail(trail),
@@ -305,14 +314,16 @@ class Story
     )
   end
 
-  def warn_ending(id)
-    @analysis[:unfinished_branches] ||= Set.new
-    @analysis[:unfinished_branches].add(id)
+  def warn_ending!(id, analysis)
+    analysis[:issues] ||= {}
+    analysis[:issues][:unfinished_branches] ||= Set.new
+    analysis[:issues][:unfinished_branches].add(id)
   end
 
-  def warn_first_again(id, flagname, trail, vars)
-    @analysis[:reset_facts] ||= []
-    @analysis[:reset_facts].push(
+  def warn_first_again!(id, flagname, trail, vars, analysis)
+    analysis[:issues] ||= {}
+    analysis[:issues][:reset_facts] ||= []
+    analysis[:issues][:reset_facts].push(
       {
         id: id,
         trail: print_trail(trail),
@@ -321,10 +332,11 @@ class Story
     )
   end
 
-  def warn_missing_node(id, linkname)
-    @analysis[:missing_links] ||= {}
-    @analysis[:missing_links][:linkname] ||= Set.new
-    @analysis[:missing_links][:linkname].add({id: linkname})
+  def warn_missing_node!(id, linkname, analysis)
+    analysis[:issues] ||= {}
+    analysis[:issues][:missing_links] ||= {}
+    analysis[:issues][:missing_links][:linkname] ||= Set.new
+    analysis[:issues][:missing_links][:linkname].add({id: linkname})
   end
 
   def print_trail(trail)
