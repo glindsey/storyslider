@@ -17,7 +17,10 @@ class Story
 
   def initialize(filename)
     warn "Loading YAML data from #{filename}..."
-    @data = YAML.load_file(filename).freeze
+    @data = YAML.load_file(filename)
+
+    warn "Normalizing data..."
+    @data = clean_story_data!(@data)
   end
 
   def analyze
@@ -50,6 +53,40 @@ class Story
     analysis[:issues][:never_hit] = zero_visit_reasons
 
     [results, analysis]
+  end
+
+  def clean_story_data!(data)
+    raise TypeError, "expected data to be Hash" unless data.is_a?(Hash)
+
+    data.each do |(id, node)|
+      if node['flags'].is_a?(Hash)
+        node['flags'].each do |(flagname, value)|
+          node['flags'][flagname] = clean_flag(id, flagname, value)
+        end
+      end
+
+      if node['values'].is_a?(Hash)
+        node['values'].each do |(varname, rules)|
+          node['values'][varname] = clean_value(id, varname, rules)
+        end
+      end
+
+      if node['links'].is_a?(Hash)
+        node['links'].each do |(linkname, conditions)|
+          if conditions['flags'].is_a?(Hash)
+            conditions['flags'].each do |(flagname, value)|
+              conditions['flags'][flagname] = clean_flag(id, flagname, value)
+            end
+          end
+
+          if conditions['values'].is_a?(Hash)
+            conditions['values'].each do |(varname, rules)|
+              conditions['values'][varname] = clean_value(id, varname, rules)
+            end
+          end
+        end
+      end
+    end
   end
 
   def traverse(id, vars_orig = {}, crumbs_orig = [], analysis = {})
@@ -86,10 +123,6 @@ class Story
 
     if node['flags'].is_a?(Hash)
       node['flags'].each do |(flagname, value)|
-        unless value == true || value == false
-          raise TypeError, "#{id}: flag #{flagname} must be true or false (was #{value})"
-        end
-
         if vars[flagname] == true && flagname.start_with?('first_')
           warn_first_again!(id, flagname, crumbs.map(&:id), vars, analysis)
         end
@@ -100,32 +133,8 @@ class Story
 
     if node['values'].is_a?(Hash)
       node['values'].each do |(varname, rules)|
-        op = ''
-        num = 0
-
-        case rules
-        when String
-          rules.strip!
-          tokens = rules.split(/\b/).map(&:strip)
-          case tokens[0]
-          when '=', '-', '+'
-            op = tokens[0]
-            num = tokens[1].to_i
-          when Integer
-            op = '='
-            num = tokens[0].to_i
-          else
-            raise TypeError, "#{id}: don't know how to parse '#{rules}'"
-          end
-        when Integer
-          op = '='
-          num = rules
-        when Hash
-          op = rules['op'].to_s
-          num = rules['value'].to_i
-        else
-          raise TypeError, "#{id}: expected #{rules} to be String, Integer, or Hash"
-        end
+        op = rules['op'].to_s
+        num = rules['value'].to_i
 
         case op
         when '='
@@ -176,43 +185,17 @@ class Story
 
         can_visit = true
         if conditions.is_a?(Hash)
-          flag_conditions = conditions['flags']
-          value_conditions = conditions['values']
-          if flag_conditions.is_a?(Hash)
-            flag_conditions.each do |(flagname, value)|
-              can_visit &= ((vars[flagname] || false) == value)
-            end
+          flag_conditions = conditions['flags'] || {}
+          value_conditions = conditions['values'] || {}
+
+          flag_conditions.each do |(flagname, value)|
+            can_visit &= ((vars[flagname] || false) == value)
           end
 
           if value_conditions.is_a?(Hash)
             value_conditions.each do |varname, rules|
-              op = ''
-              num = 0
-
-              case rules
-              when String
-                rules.strip!
-                tokens = rules.split(/\b/).map(&:strip)
-                case tokens[0]
-                when '=', '==', '<', '>'
-                  op = tokens[0]
-                  num = tokens[1].to_i
-                when Integer
-                  op = '='
-                  num = tokens[0].to_i
-                else
-                  raise TypeError, "#{id}: don't know how to parse '#{rules}'"
-                end
-              when Integer
-                op = '=='
-                num = rules.to_i
-              when Hash
-                op = rules['op'].to_s
-                num = rules['value'].to_i
-              else
-                raise TypeError,
-                      "#{id}: expected #{rules} to be String, Integer, or Hash"
-              end
+              op = rules['op'].to_s
+              num = rules['value'].to_i
 
               case op
               when '=', '=='
@@ -341,5 +324,72 @@ class Story
 
   def print_trail(trail)
     trail.join(' -> ')
+  end
+
+  def clean_flag(id, flagname, value)
+    case value
+    when String
+      cleaned_val = value.lowercase.strip
+      if ['y', 't', 'yes', 'true'].include?(cleaned_val)
+        true
+      elsif ['n', 'f', 'no', 'false'].include?(cleaned_val)
+        false
+      else
+        raise TypeError,
+              "#{id}: flag #{flagname}: don't know how to interpret " \
+              "'#{value}'"
+      end
+    when Integer
+      if value == 0
+        warn "#{id}: flag #{flagname} has value 0, interpreting as false"
+        false
+      elsif value == 1
+        warn "#{id}: flag #{flagname} has value 1, interpreting as true"
+        true
+      else
+        raise TypeError,
+              "#{id}: flag #{flagname}: don't know how to interpret " \
+              "integer #{value}"
+      end
+    when TrueClass, FalseClass
+      # This is okay.
+      value
+    else
+      raise TypeError,
+            "#{id}: value of flag #{flagname} is of unknown " \
+            "type #{value.class.name}"
+    end
+  end
+
+  def clean_value(id, varname, rules)
+    op = ''
+    num = 0
+
+    case rules
+    when String
+      rules.strip!
+      tokens = rules.split(/\b/).map(&:strip)
+      case tokens[0]
+      when '=', '-', '+', '==', '<', '>'
+        op = tokens[0]
+        num = tokens[1].to_i
+      when Integer
+        op = '='
+        num = tokens[0].to_i
+      else
+        raise TypeError, "#{id}: don't know how to parse '#{rules}'"
+      end
+    when Integer
+      op = '='
+      num = rules
+    when Hash
+      op = rules['op'].to_s
+      num = rules['value'].to_i
+    else
+      raise TypeError,
+            "#{id}: expected #{rules} to be String, Integer, or Hash"
+    end
+
+    { 'op' => op, 'value' => num }
   end
 end
